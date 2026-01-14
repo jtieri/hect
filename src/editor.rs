@@ -1,8 +1,11 @@
 use crossterm::{event::{Event::{self, Key}, KeyCode::Char, KeyEvent, KeyModifiers, read}};
-use std::io::Error;
+use std::{fmt::format, io::Error};
 use terminal::{Terminal, Size, Position};
 
 mod terminal;
+
+const NAME: &str = env!("CARGO_PKG_NAME");
+const VERSION: &str = env!("CARGO_PKG_VERSION");
 
 pub struct Editor {
     should_quit: bool,
@@ -55,11 +58,40 @@ impl Editor {
         Terminal::execute()
     }
     
+    // fn draw_welcome_message() -> Result<(), Error> { 
+    //     let mut message = format!("{NAME} editor -- version {VERSION}");
+    //     let width = Terminal::size()?.width as usize;
+    //     let len = message.len();
+    //     let padding = (width - len) / 2;
+    //     let spaces = " ".repeat(padding - 1);
+    //     message = format!("~{spaces}{message}");
+    //     message.truncate(width);
+    //     Terminal::print(&message)
+    // } 
+    
+    fn draw_welcome_message() -> Result<(), Error> { 
+        let message = format!("{NAME} editor -- version {VERSION}");
+        Terminal::print(&message)
+    } 
+    
+    fn draw_empty_row() -> Result<(), Error> {
+        Terminal::print("~")
+    }
+    
     fn draw_rows() -> Result<(), Error> {
-        let Size{height, ..} = Terminal::size()?;
+        let Size{height, width} = Terminal::size()?;
+        let middle_height = height / 3;
+        let center_row = width / 2;
+        
         for current_row in 0..height {
             Terminal::clear_line()?;
-            Terminal::print("~")?;
+            Self::draw_empty_row()?;
+            
+            if current_row ==  middle_height {
+                Terminal::move_cursor_to(Position { x: center_row, y: middle_height })?;
+                Self::draw_welcome_message()?;
+            }
+            
             if current_row + 1 < height {
                 Terminal::print("\r\n")?;
             }
