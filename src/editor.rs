@@ -7,16 +7,13 @@ mod terminal;
 const NAME: &str = env!("CARGO_PKG_NAME");
 const VERSION: &str = env!("CARGO_PKG_VERSION");
 
+#[derive(Default)]
 pub struct Editor {
     should_quit: bool,
     position: Position
 }
 
 impl Editor {
-    pub const fn default() -> Self {
-        Self { should_quit: false, position: Position { x: 0, y: 0 } }
-    }
-
     pub fn run(&mut self) {
         Terminal::initialize().unwrap();
         let result = self.repl();
@@ -44,42 +41,42 @@ impl Editor {
             match code {
                 KeyCode::Left => {
                     // if we are at the left edge of the screen we don't update the position
-                    if self.position.x > 0 {
-                        self.position = Position { x: self.position.x-1, y: self.position.y };
+                    if self.position.column > 0 {
+                        self.position = Position { column: self.position.column-1, row: self.position.row };
                     } 
                 }
                 KeyCode::Right => {
                     // if we are at the right edge of the screen we don't update the position
-                    if self.position.x < width-1 {
-                        self.position = Position { x: self.position.x+1, y: self.position.y};
+                    if self.position.column < width-1 {
+                        self.position = Position { column: self.position.column+1, row: self.position.row};
                     }
                 }
                 KeyCode::Up => {
                     // if we are at the top of the screen we don't update the position
-                    if self.position.y > 0 {
-                        self.position = Position { x: self.position.x, y: self.position.y-1 };
+                    if self.position.row > 0 {
+                        self.position = Position { column: self.position.column, row: self.position.row-1 };
                     } 
                 }
                 KeyCode::Down => {
                     // if we are at the bottom of the screen we don't update the position
-                    if self.position.y < height-1 {
-                        self.position = Position { x: self.position.x, y: self.position.y+1 };
+                    if self.position.row < height-1 {
+                        self.position = Position { column: self.position.column, row: self.position.row+1 };
                     } 
                 }
                 KeyCode::Char('q') if *modifiers == KeyModifiers::CONTROL => {
                     self.should_quit = true;
                 }
                 KeyCode::PageUp => {
-                    self.position = Position { x: self.position.x, y: 0 };
+                    self.position = Position { column: self.position.column, row: 0 };
                 }
                 KeyCode::PageDown => {
-                    self.position = Position { x: self.position.x, y: height-1 };
+                    self.position = Position { column: self.position.column, row: height-1 };
                 }
                 KeyCode::Home => {
-                    self.position = Position { x: 0, y: self.position.y };
+                    self.position = Position { column: 0, row: self.position.row };
                 }
                 KeyCode::End => {
-                    self.position = Position { x: width-1, y: self.position.y };
+                    self.position = Position { column: width-1, row: self.position.row };
                 }
                 _ => ()
             }
@@ -87,17 +84,18 @@ impl Editor {
     }
 
     fn refresh_screen(&self) -> Result<(), Error> {
-        Terminal::hide_cursor()?;
+        Terminal::hide_caret()?;
+        Terminal::move_caret_to(Position::default())?;
         
         if self.should_quit {
             Terminal::clear_screen()?;
             Terminal::print("Goodbye.\r\n")?;
         } else {
             Self::draw_rows()?;
-            Terminal::move_cursor_to(self.position)?;
+            Terminal::move_caret_to(self.position)?;
         }   
         
-        Terminal::show_cursor()?;
+        Terminal::show_caret()?;
         Terminal::execute()
     }
     
