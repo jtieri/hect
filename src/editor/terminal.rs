@@ -35,7 +35,6 @@ impl Terminal {
     pub fn initialize() -> Result<(), Error> {
         enable_raw_mode()?;
         Self::clear_screen()?;
-        Self::move_caret_to(Position { column: 0, row: 0 })?;
         Self::execute()
     }
 
@@ -88,10 +87,6 @@ impl Terminal {
     pub fn execute() -> Result<(), Error> {
         stdout().flush()
     }
-
-    // pub fn queue_command(cmd: impl Command) -> Result<(), Error> {
-    //     queue!(stdout(), cmd)
-    // }
 
     fn queue_command<T: Command>(command: T) -> Result<(), Error> {
         queue!(stdout(), command)
